@@ -269,7 +269,17 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
                 double maxX = Double.MIN_VALUE, maxY = Double.MIN_VALUE, minX = Double.MAX_VALUE, minY= Double.MAX_VALUE;
                 while(sc.hasNextLine()) {
                     String line = sc.nextLine();
-                    String [] vals = line.split("\t");
+                    //Skip comments
+                    if(line.charAt(0) == '#')
+		      continue;
+		    //Compatability with comma separated files and tab separated files.
+		    String [] commaSplit = line.split(",");
+		    String [] tabSplit   = line.split("\t");
+                    String [] vals= null;
+                    if(commaSplit.length > tabSplit.length)
+		      vals = commaSplit;
+		    else
+		      vals = tabSplit;
                     if(vals.length != 2) {
 			System.out.println("Invalid File! Must be tab separated coordinate points.");
                         break;
