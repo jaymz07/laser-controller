@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Laser-controller : Program for controlling simple laser galvo using computer&#39;s sound card.">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Laser-controller</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/jaymz07/laser-controller">View on GitHub</a>
+
+          <h1 id="project_title">Laser-controller</h1>
+          <h2 id="project_tagline">Program for controlling simple laser galvo using computer&#39;s sound card.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/jaymz07/laser-controller/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/jaymz07/laser-controller/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>
+<a id="description" class="anchor" href="#description" aria-hidden="true"><span class="octicon octicon-link"></span></a>Description</h2>
+
+<p>Analog signal generator for driving laser galvo.
+Allows the laser galvo kits that can be inexpensively purchashed to be controlled by a computer's audio jack.</p>
+
+<p>This program generates X/Y parametric signals from an on-screen drawing through the sound card.
+Uses the sound card to generate analog voltages which are suitable, usually after amplification, for driving a laser scanner galvo.
+This program also works to generate pictures on an oscilloscope set to X/Y channel mode.</p>
+
+<p>The right channel outputs voltages corresponding to X position, while the left channel gives voltages corresponding to Y position.</p>
+
+<p>Also has the ability to load signals from a text file and output them.</p>
+
+<p>WARNING: This program can generate signals which are very harsh if played though audio speakers. 
+     The signals may even be damaging if played at high volume.
+     Turn system volume almost all the way down if not connected to a laser scanner.</p>
+
+<h2>
+<a id="compile-instructions" class="anchor" href="#compile-instructions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compile instructions</h2>
+
+<p>If the make system is installed, the package can be compiled by the command:
+make</p>
+
+<p>Otherwise the standard java compiler can be used directly:
+javac GraphicalLaserOutput.java</p>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>To run program:
+java GraphicalLaserOutput</p>
+
+<p>User inputs:</p>
+
+<hr>
+
+<pre><code>Mouse:
+  Click or drag to add points to laser path.
+
+Keyboard:
+  Backspace --  Remove last point drawn
+  C     --  Clear entire drawing
+  S     --  Sine wave animation mode
+</code></pre>
+
+<h2>
+<a id="current-features" class="anchor" href="#current-features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Current Features</h2>
+
+<ul>
+<li>Able to output drawings as they are being done by user</li>
+<li>Load a drawing from a file to be output through sound card</li>
+<li>Rotation of current drawing</li>
+<li>Generate sine wave animation (very cool if laser scanner is used with a fog machine :D )</li>
+<li>User controlled speed reduction.</li>
+</ul>
+
+<h2>
+<a id="compatability" class="anchor" href="#compatability" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compatability</h2>
+
+<ul>
+<li>Should run on anything that supports the Java Runtime Environment</li>
+<li>Should work with laser scanners up to 44K points/sec (higher can be achieved with higher sample rate audio)
+
+<ul>
+<li>Note: this will work regardless if scanner is connected. 
+Since it is attached to computer via audio jack, the computer has no way of knowing if it is actually connected</li>
+</ul>
+</li>
+</ul>
+
+<p><img src="http://laserpointerforums.com/attachments/f47/29435d1284838353-scanner-newbie-howto-spacelas-pt-20k-galvos.jpg" alt="Laser Galvo kit"></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Laser-controller maintained by <a href="https://github.com/jaymz07">jaymz07</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
