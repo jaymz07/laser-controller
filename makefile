@@ -8,14 +8,14 @@ JC = javac
 sources = $(wildcard *.java)
 classes = $(sources:.java=.class)
 
-default: classes jar permissions
+default: classes jar permissions 
 
 classes: $(CLASSES:.java=.class)
 
 clean:
 	$(RM) *.class
 
-jar: $(wildcard *.class)
+jar: GraphicalLaserOutput.class
 	jar cvfe laser-controller.jar GraphicalLaserOutput *.class
 	
 permissions:
