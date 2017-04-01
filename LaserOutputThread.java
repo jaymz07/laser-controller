@@ -149,8 +149,8 @@ public class LaserOutputThread extends Thread {
 		//convert to integers
 		ArrayList<Integer> integerPath = new ArrayList<Integer>();
 		for(Point p: interpPath) {
-		  integerPath.add(Math.round((float)(p.y*maxByte)));
-		  integerPath.add(Math.round((float)(p.x*maxByte)));
+		  integerPath.add(Math.round((float)(-p.y*maxByte)));
+		  integerPath.add(Math.round((float)(-p.x*maxByte)));
 		}
 
 		int bytesPerInteger = 2;
