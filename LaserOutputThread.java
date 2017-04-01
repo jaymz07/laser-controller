@@ -28,6 +28,14 @@ public class LaserOutputThread extends Thread {
     public volatile 	boolean terminateStream = false;
     public volatile int outNumber = 0;
     public volatile boolean lightning = false;
+    public volatile boolean filter = false;
+    public volatile double lowPassX = 1.0;
+    public volatile double highPassX = 1.0;
+    public volatile double filterFreqX =200.0;
+    public volatile double lowPassY = 1.0;
+    public volatile double highPassY = 1.0;
+    public volatile double filterFreqY =200.0;
+    public volatile boolean recalc = true;
 
     /*------Audio samples per draw point-------*/
     //public int samplesPerPoint = 1;
@@ -51,6 +59,8 @@ public class LaserOutputThread extends Thread {
 
     private static boolean DEBUG = false;
     private int currentOffset=0;
+    
+    private byte[] streamData= new byte[4];
 
     public LaserOutputThread(ArrayList<Point> pts) {
         points = pts;
@@ -70,81 +80,98 @@ public class LaserOutputThread extends Thread {
 
         //This thread executes as infinite loop. Control is done externally by setting the "points" variable.
         while(!terminateStream) {
+	    if(recalc)
+		  recomputeStream();
+		  recalc=false;
             outputToLaser();
         }
         line.drain();
         line.close();
 
     }
-    public void outputToLaser() { //throws exception?
+    public void outputToLaser() { //throws exception
 
-        //Since "points" is modified outside of this thread, create local copy to avoid runtime errors.
+	if(streamData.length>8) {
+		int currentOffset = 0;
+		int currentNum = outNumber;
+		terminateStream = false;
+		while(currentOffset < (streamData.length - writeBufferSizeBytes)) {
+		    if(currentNum != outNumber)
+		      break;
+		    //Write to audio in chunks.
+		    currentOffset += line.write(streamData, currentOffset, writeBufferSizeBytes);
+		    try {
+			int sleepTime = Math.round(1000.0f/fSampleRate*writeBufferSizeBytes/frameSize);
+			if(!lightning)
+			  sleepTime -= 10;
+			else
+			  sleepTime += 5;
+			if(sleepTime >0)
+			  Thread.sleep(sleepTime);
+		    }
+		    catch(InterruptedException e) {
+		    }
+		    // line.drain();
+		}
+		if(currentNum == outNumber)
+		  currentOffset += line.write(streamData, currentOffset, streamData.length - currentOffset);
+		
+		//for(byte b : streamData) System.out.println(b);
+		//System.out.println("\n\n\n"+currentOffset+"\n"+streamData.length);
+	}
+    }
+    public void recomputeStream() {
+	//Since "points" is modified outside of this thread, create local copy to avoid runtime errors.
         ArrayList<Point> localPoints = new ArrayList<Point>(points);
         int numPoints = localPoints.size();
+	 if(numPoints > 2) {
+		/*generate stream data to send to soundcard. Must use byte array format */
 
-        if(numPoints > 2) {
-            /*generate stream data to send to soundcard. Must use byte array format */
+		ArrayList<Point> interpPath = interpolatePath(localPoints);
+		ArrayList<Point> xSignal = new ArrayList<Point>();
+		ArrayList<Point> ySignal = new ArrayList<Point>();
+		
+		if(filter) {
+		      for(int i =0; i<interpPath.size(); i++) {
+			  xSignal.add(new Point(((double)i)/fSampleRate,interpPath.get(i).x));
+			  ySignal.add(new Point(((double)i)/fSampleRate,interpPath.get(i).y));
+		      }
+		      xSignal = (new DataSet(xSignal)).crossoverFilter2(filterFreqX,lowPassX,highPassX).data;
+		      ySignal = (new DataSet(ySignal)).crossoverFilter2(filterFreqY,lowPassY,highPassY).data;
+		      for(int i =0; i<interpPath.size(); i++)
+			  interpPath.set(i,new Point(xSignal.get(i).y,ySignal.get(i).y));
+		}
+		numPoints = interpPath.size();
+		//backwards path:
+		for(int i =numPoints -1;i>0; i--)
+		  interpPath.add(interpPath.get(i));
+		
+		//convert to integers
+		ArrayList<Integer> integerPath = new ArrayList<Integer>();
+		for(Point p: interpPath) {
+		  integerPath.add(Math.round((float)(p.y*maxByte)));
+		  integerPath.add(Math.round((float)(p.x*maxByte)));
+		}
 
-            ArrayList<Point> interpPath = interpolatePath(localPoints);
-	    numPoints = interpPath.size();
-	    //backwards path:
-	    for(int i =numPoints -1;i>0; i--)
-	      interpPath.add(interpPath.get(i));
-	    
-	    //convert to integers
-	    ArrayList<Integer> integerPath = new ArrayList<Integer>();
-	    for(Point p: interpPath) {
-	      integerPath.add(Math.round((float)(-p.y*maxByte)));
-	      integerPath.add(Math.round((float)(-p.x*maxByte)));
-	    }
-
-            int bytesPerInteger = 2;
-            byte[] streamData = new byte[integerPath.size() * bytesPerInteger - 4];
-            for(int i = 0; i < integerPath.size() - 2; i+=2)
-            {
-		//Manual conversion from integer to byte:
-                int nValueX = integerPath.get(i), nValueY = integerPath.get(i+1);
-		//left channel:
-                streamData[i*2 + 0] = (byte) (nValueX & 0xFF);
-                streamData[i*2 + 1] = (byte) ((nValueX >>> 8) & 0xFF);
-                //right channel:
-                streamData[i*2 + 2] = (byte) (nValueY & 0xFF);
-                streamData[i*2 + 3] = (byte) ((nValueY >>> 8) & 0xFF);
-            }
-
-            int currentOffset = 0;
-	    int currentNum = outNumber;
-	    terminateStream = false;
-            while(currentOffset < (streamData.length - writeBufferSizeBytes)) {
-		if(currentNum != outNumber)
-		  break;
-		//Write to audio in chunks.
-                currentOffset += line.write(streamData, currentOffset, writeBufferSizeBytes);
-                try {
-		    int sleepTime = Math.round(1000.0f/fSampleRate*writeBufferSizeBytes/frameSize);
-		    if(!lightning)
-		      sleepTime -= 10;
-		    else
-		      sleepTime += 5;
-		    if(sleepTime >0)
-		      Thread.sleep(sleepTime);
-                }
-                catch(InterruptedException e) {
-                }
-                // line.drain();
-            }
-            if(currentNum == outNumber)
-	      currentOffset += line.write(streamData, currentOffset, streamData.length - currentOffset);
-	    
-	    //for(byte b : streamData) System.out.println(b);
-	    //System.out.println("\n\n\n"+currentOffset+"\n"+streamData.length);
-        }
+		int bytesPerInteger = 2;
+		streamData = new byte[integerPath.size() * bytesPerInteger - 4];
+		for(int i = 0; i < integerPath.size() - 2; i+=2)
+		{
+		    //Manual conversion from integer to byte:
+		    int nValueX = integerPath.get(i), nValueY = integerPath.get(i+1);
+		    //left channel:
+		    streamData[i*2 + 0] = (byte) (nValueX & 0xFF);
+		    streamData[i*2 + 1] = (byte) ((nValueX >>> 8) & 0xFF);
+		    //right channel:
+		    streamData[i*2 + 2] = (byte) (nValueY & 0xFF);
+		    streamData[i*2 + 3] = (byte) ((nValueY >>> 8) & 0xFF);
+		}
+	}
     }
-    
     public ArrayList<Point> interpolatePath(ArrayList<Point> pointsIn) {
       ArrayList<Point> out = new ArrayList<Point>();
       for(int i =0 ; i<pointsIn.size() - 1; i++) {
-	int numPointsBetween = (int)(pointsIn.get(i).getDistTo(pointsIn.get(i+1))/maxDist);
+	int numPointsBetween = (int)(pointsIn.get(i).getDist	(pointsIn.get(i+1))/maxDist);
 	Point pt = pointsIn.get(i), ptNext = pointsIn.get(i+1);
 	out.add(pt);
 	for(int j=0;j<numPointsBetween;j++) {
