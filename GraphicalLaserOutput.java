@@ -22,6 +22,7 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
     DrawPanel drawPanel;
     ControlPanel controlPanelWindow;
     SinePanel sinePanelWindow;
+    FilterPanel filterPanelWindow;
 
     Graphics page;
 
@@ -66,6 +67,11 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
         sinePanelWindow.pack();
         sinePanelWindow.setLocation(500,250);
         sinePanelWindow.setVisible(false);
+        
+        filterPanelWindow = new FilterPanel("Signal Filtering");
+        filterPanelWindow.pack();
+        filterPanelWindow.setLocation(500,250);
+        filterPanelWindow.setVisible(false);
 
         //drawPanel actually writes to the screen. frame is just a container
         drawPanel = new DrawPanel();
@@ -188,8 +194,8 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
             //Make sliders
             ArrayList<LabelSlider> sliders = new ArrayList<LabelSlider>();
 	    
-            sliders.add(new LabelSlider("Rotation Speed",JSlider.VERTICAL,1,100,50));
-	    sliders.add(new LabelSlider("Resamples",JSlider.VERTICAL,1,10,1));
+            sliders.add(new LabelSlider("Rotation Speed",JSlider.VERTICAL,1,10,5));
+	    sliders.add(new LabelSlider("Resamples",JSlider.VERTICAL,1,15,5));
 	    
             JPanel sliderPanel = new JPanel(new GridLayout(1,0));
             for(LabelSlider s : sliders) {
@@ -384,6 +390,113 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
         }
 
     }
+    
+    public class FilterPanel extends Frame implements WindowListener, ActionListener, ChangeListener, ItemListener {
+        ArrayList<Button> buttons = new ArrayList<Button>();
+        ArrayList<JCheckBox> cBoxes = new ArrayList<JCheckBox>();
+        ArrayList<LabelSlider> slidersX = new ArrayList<LabelSlider>();
+        ArrayList<LabelSlider> slidersY = new ArrayList<LabelSlider>();
+
+
+        public FilterPanel(String title) {
+            super(title);
+            setLayout(new FlowLayout());
+            addWindowListener(this);
+
+            //buttons.add(new Button("Button!"));
+            for(Button b : buttons) {
+                b.addActionListener(this);
+                add(b);
+            }
+            JPanel sliderPanelX = new JPanel(new GridLayout(1,0));
+            JPanel sliderPanelY = new JPanel(new GridLayout(1,0));
+
+            slidersX.add(new LabelSlider("Low Freq(X)",JSlider.VERTICAL,0,100,100));
+            slidersX.add(new LabelSlider("High Freq(X)",JSlider.VERTICAL,0,100,100));
+            slidersX.add(new LabelSlider("Crossover(X)",JSlider.VERTICAL,10,1000,200));
+            
+            slidersY.add(new LabelSlider("Low Freq(Y)",JSlider.VERTICAL,0,100,100));
+            slidersY.add(new LabelSlider("High Freq(Y)",JSlider.VERTICAL,0,100,100));
+            slidersY.add(new LabelSlider("Crossover(Y)",JSlider.VERTICAL,10,1000,200));
+
+            for(LabelSlider s : slidersX) {
+                s.addChangeListener(this);
+                sliderPanelX.add(s);
+                JLabel label = new JLabel(s.label,JLabel.CENTER);
+                label.setAlignmentX(s.getAlignmentX());
+                label.setAlignmentY(Component.BOTTOM_ALIGNMENT);
+                sliderPanelX.add(label);
+            }
+            add(sliderPanelX);
+            for(LabelSlider s : slidersY) {
+                s.addChangeListener(this);
+                sliderPanelY.add(s);
+                JLabel label = new JLabel(s.label,JLabel.CENTER);
+                label.setAlignmentX(s.getAlignmentX());
+                label.setAlignmentY(Component.BOTTOM_ALIGNMENT);
+                sliderPanelY.add(label);
+                sliderPanelY.setAlignmentY(Component.BOTTOM_ALIGNMENT);
+            }
+            add(sliderPanelY);
+	    
+	    cBoxes.add(new JCheckBox("Enable Filter"));
+            cBoxes.get(cBoxes.size()-1).setName("Enable Filter");
+	    
+            for(JCheckBox b : cBoxes)  {
+                b.addItemListener(this);
+                b.setSelected(false);
+                add(b);
+            }
+        }
+        //Button events:
+        public void actionPerformed(ActionEvent e) { }
+
+        public void windowClosing(WindowEvent e) {
+            System.exit(0);
+        }
+        //Neccesary overides for "implements WindowListener"
+        public void windowOpened(WindowEvent e) {}
+        public void windowActivated(WindowEvent e) {}
+        public void windowIconified(WindowEvent e) {}
+        public void windowDeiconified(WindowEvent e) {}
+        public void windowDeactivated(WindowEvent e) {}
+        public void windowClosed(WindowEvent e) {}
+
+        //Slider events
+        public void stateChanged(ChangeEvent e) {
+            LabelSlider source = (LabelSlider)e.getSource();
+            if (!source.getValueIsAdjusting()) {
+                if(source.label.equals("Low Freq(X)"))
+                    audioThread.lowPassX = (double)source.getValue()/100;
+                if(source.label.equals("High Freq(X)"))
+                    audioThread.highPassX = (double)source.getValue()/100;
+                if(source.label.equals("Crossover(X)"))
+                    audioThread.filterFreqX = (double)source.getValue();
+                if(source.label.equals("Low Freq(Y)"))
+                    audioThread.lowPassY = (double)source.getValue()/100;
+                if(source.label.equals("High Freq(Y)"))
+                    audioThread.highPassY = (double)source.getValue()/100;
+                if(source.label.equals("Crossover(Y)"))
+                    audioThread.filterFreqY = (double)source.getValue();
+                System.out.println((int)source.getValue());
+                frame.repaint();
+            }
+            System.out.println(source.label);
+        }
+
+        //Check box events
+        public void itemStateChanged(ItemEvent e) {
+            JCheckBox source = (JCheckBox)e.getItemSelectable();
+            if(source.getName().equals("Enable Filter")) {
+                if(e.getStateChange() == 2)
+                    audioThread.filter = false;
+                else
+                    audioThread.filter = true;
+                audioThread.recalc=true;
+            }
+        }
+
+    }
 
     /*---------Generate Sinusoid Graph-----------*/
     public ArrayList<Point> sinGraphScreen(double phase)
@@ -426,7 +539,7 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
 
     public ArrayList<Point> rotationAnimation(ArrayList<Point> input) {
         ArrayList<Point> out = new ArrayList<Point>();
-        double rotationIncrement = (double)rotationSpeed/10000;
+        double rotationIncrement = (double)rotationSpeed/10000/audioThread.maxDist;
         for(double angle = 0.0; angle < Math.PI*2; angle += rotationIncrement) {
 	    ArrayList<Point> rotated = getRotatedPoints(input,angle);
             for(Point pt : rotated)
@@ -437,10 +550,14 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
 
 //----------Update Other thread with current drawing
     public void setNewDrawPath(ArrayList<Point> ptsToDraw) {
-	if(rotating && mode.equals("draw"))
+	if(rotating && mode.equals("draw")) {
 	  audioThread.points = rotationAnimation(ptsToDraw);
-	else
+	  audioThread.recalc=true;
+	}
+	else {
 	  audioThread.points = ptsToDraw;
+	  audioThread.recalc=true;
+	}
 	//change this number so that audio thread knows to interrupt current buffer (kinda ghetto...)
         audioThread.outNumber++;
     }
@@ -472,6 +589,10 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
 
             if(drawPoints.size() > 0)
                 drawPoints.remove(drawPoints.size() - 1);
+        }
+        if(e.getKeyCode()== KeyEvent.VK_Q) {
+
+            drawPoints=new ArrayList<Point>();
         }
         if(e.getKeyCode()== KeyEvent.VK_S) {
             mode = "sine";
