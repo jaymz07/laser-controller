@@ -8,15 +8,15 @@ JC = javac
 sources = $(wildcard *.java)
 classes = $(sources:.java=.class)
 
-default: classes jar permissions 
+default: classes jar clean permissions 
 
 classes: $(CLASSES:.java=.class)
 
-clean:
-	$(RM) *.class
-
 jar: GraphicalLaserOutput.class
 	jar cvfe laser-controller.jar GraphicalLaserOutput *.class
+
+clean:
+	$(RM) *.class
 	
 permissions:
 	chmod 755 laser-controller.jar
