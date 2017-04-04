@@ -175,6 +175,7 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
             buttons.add(new Button("Sine Mode"));
             buttons.add(new Button("Draw Mode"));
             buttons.add(new Button("Open Drawing"));
+            buttons.add(new Button("Save Drawing"));
 	    
             JPanel buttonPanel = new JPanel(new GridLayout(0,1));
             for(Button b : buttons) {
@@ -236,6 +237,9 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
                 mode = "draw";
             else if(actionString == "Open Drawing") {
                 openDrawingFromPrompt();
+            }
+            else if(actionString == "Save Drawing") {
+                saveDrawingFromPrompt();
             }
             frame.repaint();
         }
@@ -299,8 +303,8 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
 		    else
 		      vals = tabSplit;
                     if(vals.length != 2) {
-			System.out.println("Invalid File! Must be tab separated coordinate points.");
-                        break;
+		      System.out.println("Invalid File! Must be coordinate points separated by tabs or commas. May contain #comments.");
+		      break;
                     }
                     double x = Double.parseDouble(vals[0]);
                     double y = Double.parseDouble(vals[1]);
@@ -310,12 +314,43 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
                     maxY = Math.max(maxY,y);
                     ptsIn.add(new Point(x,y));
                 }
+                //Normalize points received from the file to completely fill the drawing area, perserving aspect ratio.
                 double range = Math.max(maxX- minX, maxY- minY);
                 for(Point p : ptsIn) {
                     p.x = (p.x - minX)/range*width;
                     p.y = height - (p.y - minY)/range*height;
                 }
                 drawPoints = ptsIn;
+            }
+        }
+        
+         public void saveDrawingFromPrompt() {
+            int returnVal = fileChooser.showOpenDialog(this);
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();		
+                BufferedWriter bw = null;
+		FileWriter fw = null;
+		try {
+			fw = new FileWriter(file);
+			bw = new BufferedWriter(fw);
+			
+			for(Point pt : drawPoints) {
+				bw.write(pt.x + "\t" + pt.y + "\n");
+			}
+
+			System.out.println("Done");
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (bw != null)
+					bw.close();
+				if (fw != null)
+					fw.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
             }
         }
 
