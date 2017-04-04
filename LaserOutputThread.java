@@ -36,7 +36,10 @@ public class LaserOutputThread extends Thread {
     public volatile double highPassY = 1.0;
     public volatile double filterFreqY =200.0;
     public volatile boolean recalc = true;
+<<<<<<< HEAD
     public volatile boolean invertSignal = false;
+=======
+>>>>>>> 46c1bacccd937386b79e6a48f3db1ebe731abb6e
 
     /*------Audio samples per draw point-------*/
     //public int samplesPerPoint = 1;
@@ -149,12 +152,18 @@ public class LaserOutputThread extends Thread {
 		
 		//convert to integers
 		ArrayList<Integer> integerPath = new ArrayList<Integer>();
+<<<<<<< HEAD
 		int invFactor = 1;
 		if(invertSignal)
 		  invFactor=-1;
 		for(Point p: interpPath) {
 		  integerPath.add(Math.round((float)(invFactor*p.y*maxByte)));
 		  integerPath.add(Math.round((float)(invFactor*p.x*maxByte)));
+=======
+		for(Point p: interpPath) {
+		  integerPath.add(Math.round((float)(-p.y*maxByte)));
+		  integerPath.add(Math.round((float)(-p.x*maxByte)));
+>>>>>>> 46c1bacccd937386b79e6a48f3db1ebe731abb6e
 		}
 
 		int bytesPerInteger = 2;

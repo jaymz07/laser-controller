@@ -68,11 +68,18 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
         sinePanelWindow.setLocation(500,250);
         sinePanelWindow.setVisible(false);
         
+<<<<<<< HEAD
         //Instantiate window for controlling the crossover filter feature.
         filterPanelWindow = new FilterPanel("Signal Filtering");
         filterPanelWindow.pack();
         filterPanelWindow.setLocation(500,500);
         filterPanelWindow.setVisible(true);
+=======
+        filterPanelWindow = new FilterPanel("Signal Filtering");
+        filterPanelWindow.pack();
+        filterPanelWindow.setLocation(500,250);
+        filterPanelWindow.setVisible(false);
+>>>>>>> 46c1bacccd937386b79e6a48f3db1ebe731abb6e
 
         //drawPanel actually writes to the screen. frame is just a container
         drawPanel = new DrawPanel();
