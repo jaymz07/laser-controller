@@ -19,8 +19,8 @@ import javax.sound.sampled.SourceDataLine;
 
 public class LaserOutputThread extends Thread {
 
-    /*Main control of thread is done through the "points" variable.
-     *Points is set externally to be an arraylist of normalized points.
+    /*Main control of thread is done through these volatile variables.
+     *Points is set externally to be an arraylist of normalized Point classes.
      * Normalized, in the sense that neither abs(x) nor abs(y) exceed 1.0.
      * ie the points can fit in a 1X1 box....
      */
@@ -36,6 +36,7 @@ public class LaserOutputThread extends Thread {
     public volatile double highPassY = 1.0;
     public volatile double filterFreqY =200.0;
     public volatile boolean recalc = true;
+    public volatile boolean invertSignal = false;
 
     /*------Audio samples per draw point-------*/
     //public int samplesPerPoint = 1;
@@ -148,9 +149,12 @@ public class LaserOutputThread extends Thread {
 		
 		//convert to integers
 		ArrayList<Integer> integerPath = new ArrayList<Integer>();
+		int invFactor = 1;
+		if(invertSignal)
+		  invFactor=-1;
 		for(Point p: interpPath) {
-		  integerPath.add(Math.round((float)(-p.y*maxByte)));
-		  integerPath.add(Math.round((float)(-p.x*maxByte)));
+		  integerPath.add(Math.round((float)(invFactor*p.y*maxByte)));
+		  integerPath.add(Math.round((float)(invFactor*p.x*maxByte)));
 		}
 
 		int bytesPerInteger = 2;

@@ -68,10 +68,11 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
         sinePanelWindow.setLocation(500,250);
         sinePanelWindow.setVisible(false);
         
+        //Instantiate window for controlling the crossover filter feature.
         filterPanelWindow = new FilterPanel("Signal Filtering");
         filterPanelWindow.pack();
-        filterPanelWindow.setLocation(500,250);
-        filterPanelWindow.setVisible(false);
+        filterPanelWindow.setLocation(500,500);
+        filterPanelWindow.setVisible(true);
 
         //drawPanel actually writes to the screen. frame is just a container
         drawPanel = new DrawPanel();
@@ -186,8 +187,12 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
             ArrayList<JCheckBox> cBoxes = new ArrayList<JCheckBox>();
             cBoxes.add(new JCheckBox("Rotate"));
             cBoxes.get(cBoxes.size()-1).setName("Rotate");
+            cBoxes.add(new JCheckBox("Invert"));
+            cBoxes.get(cBoxes.size()-1).setName("Invert");
+            
             for(JCheckBox b : cBoxes) {
                 b.addItemListener(this);
+                b.setAlignmentY(Component.BOTTOM_ALIGNMENT);
                 add(b);
             }
 
@@ -256,6 +261,13 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
                     rotating = false;
                 else
                     rotating = true;
+            }
+            if(source.getName().equals("Invert")) {
+                if(e.getStateChange() == 2)
+                    audioThread.invertSignal = false;
+                else
+                    audioThread.invertSignal = true;
+                audioThread.recalc=true;
             }
             frame.repaint();
         }
