@@ -188,8 +188,10 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
             ArrayList<JCheckBox> cBoxes = new ArrayList<JCheckBox>();
             cBoxes.add(new JCheckBox("Rotate"));
             cBoxes.get(cBoxes.size()-1).setName("Rotate");
-            cBoxes.add(new JCheckBox("Invert"));
-            cBoxes.get(cBoxes.size()-1).setName("Invert");
+            cBoxes.add(new JCheckBox("Invert X"));
+            cBoxes.get(cBoxes.size()-1).setName("Invert X");
+            cBoxes.add(new JCheckBox("Invert Y"));
+            cBoxes.get(cBoxes.size()-1).setName("Invert Y");
             
             for(JCheckBox b : cBoxes) {
                 b.addItemListener(this);
@@ -266,11 +268,18 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
                 else
                     rotating = true;
             }
-            if(source.getName().equals("Invert")) {
+            if(source.getName().equals("Invert X")) {
                 if(e.getStateChange() == 2)
-                    audioThread.invertSignal = false;
+                    audioThread.invertSignalX = false;
                 else
-                    audioThread.invertSignal = true;
+                    audioThread.invertSignalX = true;
+                audioThread.recalc=true;
+            }
+            if(source.getName().equals("Invert Y")) {
+                if(e.getStateChange() == 2)
+                    audioThread.invertSignalY = false;
+                else
+                    audioThread.invertSignalY = true;
                 audioThread.recalc=true;
             }
             frame.repaint();
@@ -455,6 +464,7 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
                 b.addActionListener(this);
                 add(b);
             }
+            JPanel filterSliders = new JPanel(new GridLayout(0,1,10,10));
             JPanel sliderPanelX = new JPanel(new GridLayout(1,0));
             JPanel sliderPanelY = new JPanel(new GridLayout(1,0));
 
@@ -474,7 +484,8 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
                 label.setAlignmentY(Component.BOTTOM_ALIGNMENT);
                 sliderPanelX.add(label);
             }
-            add(sliderPanelX);
+            sliderPanelX.setBorder(BorderFactory.createTitledBorder("X Filter"));
+            filterSliders.add(sliderPanelX);
             for(LabelSlider s : slidersY) {
                 s.addChangeListener(this);
                 sliderPanelY.add(s);
@@ -482,9 +493,11 @@ public class GraphicalLaserOutput implements MouseListener, MouseMotionListener,
                 label.setAlignmentX(s.getAlignmentX());
                 label.setAlignmentY(Component.BOTTOM_ALIGNMENT);
                 sliderPanelY.add(label);
-                sliderPanelY.setAlignmentY(Component.BOTTOM_ALIGNMENT);
             }
-            add(sliderPanelY);
+            sliderPanelY.setBorder(BorderFactory.createTitledBorder("Y Filter"));
+            filterSliders.add(sliderPanelY);
+            
+            add(filterSliders);
 	    
 	    cBoxes.add(new JCheckBox("Enable Filter"));
             cBoxes.get(cBoxes.size()-1).setName("Enable Filter");

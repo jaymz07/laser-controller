@@ -440,6 +440,21 @@ public class DataSet
 		}
 		return new DataSet(out);
 	}
+	public DataSet lowpassFilterG(double f) {
+		ArrayList<Point> conv = new ArrayList<Point>(data);
+		ArrayList<Point> out = new ArrayList<Point>(data);
+		double factor = Math.sqrt(f/Math.PI);
+		for(int j=0; j<data.size(); j++) {
+			double t = data.get(j).x;
+			conv = new ArrayList<Point>(data);
+			for(int i =0; i<data.size();i++)  {
+				double tau = data.get(i).x;
+				conv.set(i,new Point(tau,data.get(i).y*factor*Math.exp(-f*Math.pow((t-tau),2))));
+			}
+			out.set(j,new Point(t,new DataSet(conv).simpIntegrate()));
+		}
+		return new DataSet(out);
+	}
 	public DataSet highpassFilter1(double f) {
 		ArrayList<Point> conv = new ArrayList<Point>(data);
 		ArrayList<Point> out = new ArrayList<Point>(data);
@@ -476,9 +491,33 @@ public class DataSet
 		}
 		return new DataSet(out);
 	}
+	public DataSet highpassFilterG(double f) {
+		ArrayList<Point> conv = new ArrayList<Point>(data);
+		ArrayList<Point> out = new ArrayList<Point>(data);
+		double factor = Math.sqrt(f/Math.PI);
+		for(int j=0; j<data.size(); j++) {
+			double t = data.get(j).x;
+			conv = new ArrayList<Point>(data);
+			for(int i =0; i<data.size();i++)  {
+				double tau = data.get(i).x;
+				conv.set(i,new Point(tau,data.get(i).y*factor*Math.exp(-Math.pow(t-tau,2)*f)));
+			}
+			double convResult = (new DataSet(conv)).simpIntegrate();
+			out.set(j,new Point(t,data.get(j).y - convResult));
+		}
+		return new DataSet(out);
+	}
 	public DataSet crossoverFilter2(double f, double lp, double hp) {
 		DataSet lowPassed = lowpassFilter1(f);
 		DataSet	highPassed = highpassFilter1(f);
+		for(int i=0;i<data.size();i++) {
+			lowPassed.data.get(i).y = lp*lowPassed.data.get(i).y + hp*highPassed.data.get(i).y;
+		}
+		return lowPassed;
+	}
+	public DataSet crossoverFilterG(double f, double lp, double hp) {
+		DataSet lowPassed = lowpassFilterG(f);
+		DataSet	highPassed = highpassFilterG(f);
 		for(int i=0;i<data.size();i++) {
 			lowPassed.data.get(i).y = lp*lowPassed.data.get(i).y + hp*highPassed.data.get(i).y;
 		}

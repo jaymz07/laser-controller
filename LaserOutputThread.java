@@ -36,7 +36,8 @@ public class LaserOutputThread extends Thread {
     public volatile double highPassY = 1.0;
     public volatile double filterFreqY =200.0;
     public volatile boolean recalc = true;
-    public volatile boolean invertSignal = false;
+    public volatile boolean invertSignalX = false;
+    public volatile boolean invertSignalY = false;
 
     /*------Audio samples per draw point-------*/
     //public int samplesPerPoint = 1;
@@ -137,8 +138,8 @@ public class LaserOutputThread extends Thread {
 			  xSignal.add(new Point(((double)i)/fSampleRate,interpPath.get(i).x));
 			  ySignal.add(new Point(((double)i)/fSampleRate,interpPath.get(i).y));
 		      }
-		      xSignal = (new DataSet(xSignal)).crossoverFilter2(filterFreqX,lowPassX,highPassX).data;
-		      ySignal = (new DataSet(ySignal)).crossoverFilter2(filterFreqY,lowPassY,highPassY).data;
+		      xSignal = (new DataSet(xSignal)).crossoverFilterG(filterFreqX,lowPassX,highPassX).data;
+		      ySignal = (new DataSet(ySignal)).crossoverFilterG(filterFreqY,lowPassY,highPassY).data;
 		      for(int i =0; i<interpPath.size(); i++)
 			  interpPath.set(i,new Point(xSignal.get(i).y,ySignal.get(i).y));
 		}
@@ -150,12 +151,14 @@ public class LaserOutputThread extends Thread {
 		//convert to integers
 		ArrayList<Integer> integerPath = new ArrayList<Integer>();
 
-		int invFactor = 1;
-		if(invertSignal)
-		  invFactor=-1;
+		int invFactorX = 1, invFactorY = 1;
+		if(invertSignalX)
+		  invFactorX=-1;
+		if(invertSignalY)
+		  invFactorY=-1;
 		for(Point p: interpPath) {
-		  integerPath.add(Math.round((float)(invFactor*p.y*maxByte)));
-		  integerPath.add(Math.round((float)(invFactor*p.x*maxByte)));
+		  integerPath.add(Math.round((float)(invFactorY*p.y*maxByte)));
+		  integerPath.add(Math.round((float)(invFactorX*p.x*maxByte)));
 		}
 
 		int bytesPerInteger = 2;
